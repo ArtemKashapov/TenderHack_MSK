@@ -1,6 +1,7 @@
 # TenderHack_MSK
 Решение команды "Самураи"
 
+Старт: 
 ```powershell
-Старт: streamlit run app.py
+streamlit run app.py
 ```
