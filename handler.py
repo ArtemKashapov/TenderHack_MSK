@@ -6,7 +6,8 @@ import pandas as pd
 from nltk.corpus import stopwords
 from six.moves import xrange
 
-from utils import INN_INFO_PATH, KPGZ2OKPD, KPGZ_PATH, MODEL_PATH, OKPD_PATH, PARTICIPANTS_PATH, PERCENT_PATH, STAVKI_PATH
+from utils import (INN_INFO_PATH, KPGZ2OKPD, KPGZ_PATH, MODEL_PATH, OKPD_PATH,
+                   PARTICIPANTS_PATH, PERCENT_PATH, STAVKI_PATH)
 
 
 def parse_code(code: str) -> str:
@@ -68,11 +69,10 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     train = pd.merge(train, temp_kpgz, on='Код КПГЗ', how='left')
     # inn_info = train.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
     inn_info = pd.read_csv(INN_INFO_PATH)
-    inn_info['ИНН'] = inn_info.index
     train = pd.merge(train, inn_info, on='ИНН', how='left')
-    train['percent'] = train['НМЦК'] - train['Итоговая цена']
-    train['percent'] = train['percent']/train['НМЦК']
-    prepared_train = train.drop(["Итоговая цена","id", "ИНН", 'Описание КПГЗ'], axis=1)
+    # train['percent'] = train['НМЦК'] - train['Итоговая цена']
+    # train['percent'] = train['percent'] / train['НМЦК']
+    prepared_train = train.drop(["ИНН", 'Описание КПГЗ'], axis=1)
     prepared_train = prepared_train.loc[(prepared_train['Статус'] == 'Завершена') | (prepared_train['Статус'] == 'Не состоялась')]
     prepared_train['Дата'] = prepared_train['Дата'].apply(set_time)
     prepared_train['is_normal'] = prepared_train['Статус'].apply(lambda x: 1 if x=='Завершена' else 0)
