@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from handler import Solution, process_data
+from handler import Solution, process_data, get_prepared
 from utils import PAGE_ICON, PAGE_TITLE, df2data, highlight_style
 
 
@@ -12,10 +12,9 @@ sol = Solution()
 
 if file:
     df = pd.read_excel(file)
-    df_transformed = process_data(data_frame=df)
-    output_data = sol.process(data=df_transformed)
+    output_data = sol.process(data=process_data(data_frame=df))
 
-    st.dataframe(output_data.style.applymap(highlight_style, subset=['percent', 'Участники']))
+    st.dataframe(output_data.style.applymap(highlight_style, subset=['Уровень снижения', 'Участники']))
     
     st.download_button(
         label="Скачать таблицу",

@@ -1,6 +1,7 @@
 import math
 from six.moves import xrange
 
+
 class FocalLossObjective(object):
     def calc_ders_range(self, approxes, targets, weights):
         # approxes, targets, weights are indexed containers of floats
