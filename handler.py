@@ -26,7 +26,6 @@ def set_time(time_tmp: str) -> int:
     return int(m)*30 + int(d)
 
 def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
-    train = data_frame
     patt1 = re.compile(r'[A-Za-z0-9]')
     patt2 = re.compile(r'[!"#$%&\'()*+,-./:;<=>?@][\\^_`}{|~]')
 
@@ -34,14 +33,15 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     okpd = pd.read_excel(OKPD_PATH, skiprows=6)
 
     kpgz2okpd = pd.read_csv(KPGZ2OKPD)
-    temp_kpgz = kpgz[['Код КПГЗ', 'Наименование классификации предметов государственного заказа (КПГЗ)', "Описание КПГЗ"]]
+    temp_kpgz = kpgz[['Код КПГЗ', 'Наименование классификации предметов государственного заказа (КПГЗ)', 'Описание КПГЗ']]
+    
     kpgz2okpd = kpgz2okpd.rename(columns=
         {
-            'Код ОКПД-2 (ОКПД2014)':"Код ОКПД2"
+            'Код ОКПД-2 (ОКПД2014)':'Код ОКПД2'
         }
     )
 
-    kpgz2okpd = kpgz2okpd[['Код КПГЗ', "Код ОКПД2"]]
+    kpgz2okpd = kpgz2okpd[['Код КПГЗ', 'Код ОКПД2']]
     okpd = okpd.rename(columns=
         {
             'Код':'Код ОКПД2'
@@ -57,62 +57,57 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     )
     
 
-    data_frame['Код ОКПД2'] = data_frame['Код ОКПД2'].apply(parse_code)
-    data_frame['Код КПГЗ'] = data_frame['Код КПГЗ'].apply(parse_code)
+    data_frame[['Код ОКПД2', 'Код КПГЗ']] = data_frame[['Код ОКПД2', 'Код КПГЗ']].apply(parse_code)
+    
     data_frame = pd.merge(data_frame, kpgz2okpd, on='Код КПГЗ', how='left')
     data_frame['temp'] = data_frame['Код ОКПД2_x'].apply(str) + ';' + data_frame['Код ОКПД2_y'].apply(str)
     data_frame['ОКПД2'] = data_frame['temp'].apply(lambda x: x.split(';')[0] if x.split(';')[0] !='nan' and len(x.split(';')) > 1 else x.split(';')[1])
-    data_frame = data_frame.drop('Код ОКПД2_x' , axis=1)
-    data_frame = data_frame.drop('Код ОКПД2_y' , axis=1)
-    data_frame = data_frame.drop('temp', axis=1)
-    data_frame = data_frame.drop('Unnamed: 0', axis=1)
+    
+    data_frame = data_frame.drop(['Код ОКПД2_x', 'Код ОКПД2_y', 'temp', 'Unnamed: 0'] , axis=1)
+    
     data_frame['Наименование КС'] = data_frame['Наименование КС'].apply(lambda x: patt1.sub('', x.lower())).apply(lambda x: patt2.sub('', x)).apply(clean_stopwords)
     data_frame = pd.merge(data_frame, temp_kpgz, on='Код КПГЗ', how='left')
-    # inn_info = data_frame.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
+    
     inn_info = pd.read_csv(INN_INFO_PATH)
     data_frame = pd.merge(data_frame, inn_info, on='ИНН', how='left')
-    # data_frame['percent'] = data_frame['НМЦК'] - data_frame['Итоговая цена']
-    # data_frame['percent'] = data_frame['percent'] / data_frame['НМЦК']
+    
     prepared_data_frame = data_frame.drop(["ИНН", 'Описание КПГЗ'], axis=1)
-    # prepared_train = prepared_train.loc[(prepared_train['Статус'] == 'Завершена') | (prepared_train['Статус'] == 'Не состоялась')]
+    
     prepared_data_frame['Дата'] = prepared_data_frame['Дата'].apply(set_time)
-    # prepared_train['is_normal'] = prepared_train['Статус'].apply(lambda x: 1 if x=='Завершена' else 0)
+    
     prepared_data_frame['Наименование КС'] = prepared_data_frame['Наименование КС'].apply(str)
     prepared_data_frame['Наименование классификации предметов государственного заказа (КПГЗ)'] = prepared_data_frame['Наименование классификации предметов государственного заказа (КПГЗ)'].apply(str)
 
     return prepared_data_frame
 
-def get_prepared(data, is_train=False, task_type='bin'):
-    X = data.drop(['percent', 'Участники', 'Ставки', "Статус", "is_normal"], axis=1)
-    if is_train:
-        if task_type == 'bin':
-            return X, data['is_normal']
-        elif task_type == 'stavki':
-            return X, data['Ставки']
-        elif task_type == 'percent':
-            X['Ставки'] = data['Ставки']
-            return X, data['percent']
-        elif task_type == 'participants':
-            X['Ставки'] = data['Ставки']
-            X['percent'] = data['percent']
-            return X, data['participants']
-        else:
-            return X, data[['percent', 'Участники', 'Ставки', "is_normal"]]
-    else:
-        return X
+# def get_prepared(data, is_train=False, task_type='bin'):
+#     X = data.drop(['percent', 'Участники', 'Ставки', "Статус", "is_normal"], axis=1)
+#     if is_train:
+#         if task_type == 'bin':
+#             return X, data['is_normal']
+#         elif task_type == 'stavki':
+#             return X, data['Ставки']
+#         elif task_type == 'percent':
+#             X['Ставки'] = data['Ставки']
+#             return X, data['percent']
+#         elif task_type == 'participants':
+#             X['Ставки'] = data['Ставки']
+#             X['percent'] = data['percent']
+#             return X, data['participants']
+#         else:
+#             return X, data[['percent', 'Участники', 'Ставки', "is_normal"]]
+#     else:
+#         return X
 
 class Solution(object):
     def __init__(self) -> None:
-        self.model_bin = self.get_bin_cat(MODEL_PATH)
+        self.model_bin = self.get_bin_cat()
         self.model_stavki, self.model_percent, self.model_participants = self.get_regressors()
     
-    def get_bin_cat(self, path2bin_cat: str) -> object:
-        params = {
-                'loss_function':FocalLossObjective(),
-                'eval_metric':"Logloss",
-            }
-        model_bin = cb.CatBoostClassifier(**params)
-        model_bin.load_model(path2bin_cat)
+    def get_bin_cat(self) -> object:
+
+        model_bin = cb.CatBoostClassifier(loss_function=FocalLossObjective(), eval_metric='Logloss')
+        model_bin.load_model(MODEL_PATH)
         return model_bin
 
     def get_regressors(self) -> tuple[object, object, object]:
@@ -140,7 +135,7 @@ class Solution(object):
     def get_pool(self, X: pd.DataFrame) -> cb.Pool:
         pool = cb.Pool(
             data=X,
-            cat_features=['Код КПГЗ', "ОКПД2", "Регион"],
+            cat_features=['Код КПГЗ', 'ОКПД2', 'Регион'],
             text_features=['Наименование КС', 'Наименование классификации предметов государственного заказа (КПГЗ)']
         )
         return pool
@@ -164,7 +159,7 @@ class Solution(object):
         data_processed.loc[data_processed['is_normal'] == 0, 'Ставки'] = 0
         data_processed.loc[data_processed['is_normal'] == 0, 'percent'] = 1
 
-        data_processed = data_processed.rename(columns={'percent':'Уровень снижения'})
+        data_processed = data_processed.rename(columns={'percent':'Уровень снижения, %'})
         return data_processed
 
         
@@ -187,11 +182,11 @@ class FocalLossObjective(object):
             p = exponents[index] / (1 + exponents[index])
 
             if targets[index] > 0.0:
-                der1 = -((1-p)**(gamma-1))*(gamma * math.log(p) * p + p - 1)/p
-                der2 = gamma*((1-p)**gamma)*((gamma*p-1)*math.log(p)+2*(p-1))
+                der1 = -((1 - p)**(gamma - 1))*(gamma * math.log(p) * p + p - 1) / p
+                der2 = gamma * ((1 - p)**gamma) * ((gamma * p - 1) * math.log(p) + 2 * (p - 1))
             else:
-                der1 = (p**(gamma-1)) * (gamma * math.log(1 - p) - p)/(1 - p)
-                der2 = p**(gamma-2)*((p*(2*gamma*(p-1)-p))/(p-1)**2 + (gamma-1)*gamma*math.log(1 - p))
+                der1 = (p**(gamma - 1)) * (gamma * math.log(1 - p) - p) / (1 - p)
+                der2 = p**(gamma - 2) * ((p * (2 * gamma * (p - 1) - p)) / (p - 1)**2 + (gamma - 1) * gamma * math.log(1 - p))
 
             if weights is not None:
                 der1 *= weights[index]
