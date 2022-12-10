@@ -6,7 +6,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from six.moves import xrange
 
-from utils import KPGZ2OKPD, KPGZ_PATH, MODEL_PATH, OKPD_PATH, PARTICIPANTS_PATH, PERCENT_PATH, STAVKI_PATH
+from utils import INN_INFO_PATH, KPGZ2OKPD, KPGZ_PATH, MODEL_PATH, OKPD_PATH, PARTICIPANTS_PATH, PERCENT_PATH, STAVKI_PATH
 
 
 def parse_code(code: str) -> str:
@@ -35,25 +35,25 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     kpgz2okpd = pd.read_csv(KPGZ2OKPD)
     temp_kpgz = kpgz[['Код КПГЗ', 'Наименование классификации предметов государственного заказа (КПГЗ)', "Описание КПГЗ"]]
     kpgz2okpd = kpgz2okpd.rename(columns=
-            {
-                'Код ОКПД-2 (ОКПД2014)':"Код ОКПД2"
-            }
-        )
-        
+        {
+            'Код ОКПД-2 (ОКПД2014)':"Код ОКПД2"
+        }
+    )
+
     kpgz2okpd = kpgz2okpd[['Код КПГЗ', "Код ОКПД2"]]
     okpd = okpd.rename(columns=
-            {
-                'Код':'Код ОКПД2'
-            }
-        )
+        {
+            'Код':'Код ОКПД2'
+        }
+    )
 
     train = train.rename(columns=
-            {
-                'ОКПД 2':'Код ОКПД2',
-                'КПГЗ':'Код КПГЗ',
-                'ИНН_хэш': 'ИНН'
-            }
-        )
+        {
+            'ОКПД 2':'Код ОКПД2',
+            'КПГЗ':'Код КПГЗ',
+            'ИНН_хэш': 'ИНН'
+        }
+    )
     
 
     train['Код ОКПД2'] = train['Код ОКПД2'].apply(parse_code)
@@ -66,7 +66,9 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     train = train.drop('temp', axis=1)
     train['Наименование КС'] = train['Наименование КС'].apply(lambda x: patt1.sub('', x.lower())).apply(lambda x: patt2.sub('', x)).apply(clean_stopwords)
     train = pd.merge(train, temp_kpgz, on='Код КПГЗ', how='left')
-    inn_info = train.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
+    # inn_info = train.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
+    inn_info = pd.read_csv(INN_INFO_PATH)
+    inn_info['ИНН'] = inn_info.index
     train = pd.merge(train, inn_info, on='ИНН', how='left')
     train['percent'] = train['НМЦК'] - train['Итоговая цена']
     train['percent'] = train['percent']/train['НМЦК']

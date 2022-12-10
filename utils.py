@@ -14,6 +14,7 @@ MODEL_PATH = 'data\model_bin.cb'
 STAVKI_PATH = 'data\model_stavki.cb'
 PERCENT_PATH = 'data\model_percent.cb'
 PARTICIPANTS_PATH = 'data\model_participants.cb'
+INN_INFO_PATH = 'data\inn_info.csv'
 
 def highlight_style(_: object) -> str:
     return f'background-color: {HIGHLIGHT_COLOR}'

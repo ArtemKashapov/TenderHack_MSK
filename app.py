@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from handler import Solution, process_data, get_prepared
+from handler import Solution, process_data
 from utils import PAGE_ICON, PAGE_TITLE, df2data, highlight_style
 
 
@@ -11,6 +11,7 @@ file = st.file_uploader("Загрузите входные данные:", type=
 sol = Solution()
 
 if file:
+    # print(file)
     df = pd.read_excel(file)
     output_data = sol.process(data=process_data(data_frame=df))
 
