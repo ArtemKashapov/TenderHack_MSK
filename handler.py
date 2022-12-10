@@ -65,6 +65,7 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     train = train.drop('Код ОКПД2_x' , axis=1)
     train = train.drop('Код ОКПД2_y' , axis=1)
     train = train.drop('temp', axis=1)
+    train = train.drop('Unnamed: 0', axis=1)
     train['Наименование КС'] = train['Наименование КС'].apply(lambda x: patt1.sub('', x.lower())).apply(lambda x: patt2.sub('', x)).apply(clean_stopwords)
     train = pd.merge(train, temp_kpgz, on='Код КПГЗ', how='left')
     # inn_info = train.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
@@ -73,9 +74,9 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     # train['percent'] = train['НМЦК'] - train['Итоговая цена']
     # train['percent'] = train['percent'] / train['НМЦК']
     prepared_train = train.drop(["ИНН", 'Описание КПГЗ'], axis=1)
-    prepared_train = prepared_train.loc[(prepared_train['Статус'] == 'Завершена') | (prepared_train['Статус'] == 'Не состоялась')]
+    # prepared_train = prepared_train.loc[(prepared_train['Статус'] == 'Завершена') | (prepared_train['Статус'] == 'Не состоялась')]
     prepared_train['Дата'] = prepared_train['Дата'].apply(set_time)
-    prepared_train['is_normal'] = prepared_train['Статус'].apply(lambda x: 1 if x=='Завершена' else 0)
+    # prepared_train['is_normal'] = prepared_train['Статус'].apply(lambda x: 1 if x=='Завершена' else 0)
     prepared_train['Наименование КС'] = prepared_train['Наименование КС'].apply(str)
     prepared_train['Наименование классификации предметов государственного заказа (КПГЗ)'] = prepared_train['Наименование классификации предметов государственного заказа (КПГЗ)'].apply(str)
 
@@ -139,21 +140,28 @@ class Solution(object):
     def get_pool(self, X: pd.DataFrame) -> cb.Pool:
         pool = cb.Pool(
             data=X,
-            cat_features=['Код КПГЗ', 'Код ОКПД2', 'Регион'],
+            cat_features=['Код КПГЗ', "ОКПД2", "Регион"],
             text_features=['Наименование КС', 'Наименование классификации предметов государственного заказа (КПГЗ)']
         )
         return pool
 
     def process(self, data_processed: pd.DataFrame) -> pd.DataFrame:
         pool1 = self.get_pool(data_processed)
-        preds_stavki = self.model_stavki(pool1)
+        preds_status = self.model_bin.predict(pool1)
+
+        preds_stavki = self.model_stavki.predict(pool1)
         data_processed['Ставки'] = preds_stavki
         pool2 = self.get_pool(data_processed)
-        preds_procent = self.model_percent(pool2)
-        data_processed['Уровень снижения'] = preds_procent
+        preds_procent = self.model_percent.predict(pool2)
+        data_processed['percent'] = preds_procent
         pool3 = self.get_pool(data_processed)
-        preds_participants = self.model_percent(pool3)
+        preds_participants = self.model_percent.predict(pool3)
+        
         data_processed['Участники'] = preds_participants
+        data_processed['is_normal'] = preds_status
+        data_processed.loc[data_processed['is_normal'] == 0]['Участники'] = 0
+        data_processed.loc[data_processed['is_normal'] == 0]['Ставки'] = 0
+        data_processed.loc[data_processed['is_normal'] == 0]['percent'] = 100
         return data_processed
 
         
