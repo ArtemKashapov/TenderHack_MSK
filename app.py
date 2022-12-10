@@ -15,7 +15,7 @@ if file:
     df = pd.read_excel(file)
     output_data = sol.process(data_processed=process_data(data_frame=df))
 
-    st.dataframe(output_data.style.applymap(highlight_style, subset=['percent', 'Участники']))
+    st.dataframe(output_data.style.applymap(highlight_style, subset=['Уровень снижения', 'Участники']))
     
     st.download_button(
         label="Скачать таблицу",

@@ -48,7 +48,7 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
-    train = train.rename(columns=
+    data_frame = data_frame.rename(columns=
         {
             'ОКПД 2':'Код ОКПД2',
             'КПГЗ':'Код КПГЗ',
@@ -57,30 +57,30 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     )
     
 
-    train['Код ОКПД2'] = train['Код ОКПД2'].apply(parse_code)
-    train['Код КПГЗ'] = train['Код КПГЗ'].apply(parse_code)
-    train = pd.merge(train, kpgz2okpd, on='Код КПГЗ', how='left')
-    train['temp'] = train['Код ОКПД2_x'].apply(str) + ';' + train['Код ОКПД2_y'].apply(str)
-    train['ОКПД2'] = train['temp'].apply(lambda x: x.split(';')[0] if x.split(';')[0] !='nan' and len(x.split(';')) > 1 else x.split(';')[1])
-    train = train.drop('Код ОКПД2_x' , axis=1)
-    train = train.drop('Код ОКПД2_y' , axis=1)
-    train = train.drop('temp', axis=1)
-    train = train.drop('Unnamed: 0', axis=1)
-    train['Наименование КС'] = train['Наименование КС'].apply(lambda x: patt1.sub('', x.lower())).apply(lambda x: patt2.sub('', x)).apply(clean_stopwords)
-    train = pd.merge(train, temp_kpgz, on='Код КПГЗ', how='left')
-    # inn_info = train.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
+    data_frame['Код ОКПД2'] = data_frame['Код ОКПД2'].apply(parse_code)
+    data_frame['Код КПГЗ'] = data_frame['Код КПГЗ'].apply(parse_code)
+    data_frame = pd.merge(data_frame, kpgz2okpd, on='Код КПГЗ', how='left')
+    data_frame['temp'] = data_frame['Код ОКПД2_x'].apply(str) + ';' + data_frame['Код ОКПД2_y'].apply(str)
+    data_frame['ОКПД2'] = data_frame['temp'].apply(lambda x: x.split(';')[0] if x.split(';')[0] !='nan' and len(x.split(';')) > 1 else x.split(';')[1])
+    data_frame = data_frame.drop('Код ОКПД2_x' , axis=1)
+    data_frame = data_frame.drop('Код ОКПД2_y' , axis=1)
+    data_frame = data_frame.drop('temp', axis=1)
+    data_frame = data_frame.drop('Unnamed: 0', axis=1)
+    data_frame['Наименование КС'] = data_frame['Наименование КС'].apply(lambda x: patt1.sub('', x.lower())).apply(lambda x: patt2.sub('', x)).apply(clean_stopwords)
+    data_frame = pd.merge(data_frame, temp_kpgz, on='Код КПГЗ', how='left')
+    # inn_info = data_frame.groupby('ИНН')[['Участники', 'Ставки', 'НМЦК']].agg(['std', 'count', 'median'])
     inn_info = pd.read_csv(INN_INFO_PATH)
-    train = pd.merge(train, inn_info, on='ИНН', how='left')
-    # train['percent'] = train['НМЦК'] - train['Итоговая цена']
-    # train['percent'] = train['percent'] / train['НМЦК']
-    prepared_train = train.drop(["ИНН", 'Описание КПГЗ'], axis=1)
+    data_frame = pd.merge(data_frame, inn_info, on='ИНН', how='left')
+    # data_frame['percent'] = data_frame['НМЦК'] - data_frame['Итоговая цена']
+    # data_frame['percent'] = data_frame['percent'] / data_frame['НМЦК']
+    prepared_data_frame = data_frame.drop(["ИНН", 'Описание КПГЗ'], axis=1)
     # prepared_train = prepared_train.loc[(prepared_train['Статус'] == 'Завершена') | (prepared_train['Статус'] == 'Не состоялась')]
-    prepared_train['Дата'] = prepared_train['Дата'].apply(set_time)
+    prepared_data_frame['Дата'] = prepared_data_frame['Дата'].apply(set_time)
     # prepared_train['is_normal'] = prepared_train['Статус'].apply(lambda x: 1 if x=='Завершена' else 0)
-    prepared_train['Наименование КС'] = prepared_train['Наименование КС'].apply(str)
-    prepared_train['Наименование классификации предметов государственного заказа (КПГЗ)'] = prepared_train['Наименование классификации предметов государственного заказа (КПГЗ)'].apply(str)
+    prepared_data_frame['Наименование КС'] = prepared_data_frame['Наименование КС'].apply(str)
+    prepared_data_frame['Наименование классификации предметов государственного заказа (КПГЗ)'] = prepared_data_frame['Наименование классификации предметов государственного заказа (КПГЗ)'].apply(str)
 
-    return prepared_train
+    return prepared_data_frame
 
 def get_prepared(data, is_train=False, task_type='bin'):
     X = data.drop(['percent', 'Участники', 'Ставки', "Статус", "is_normal"], axis=1)
@@ -155,13 +155,16 @@ class Solution(object):
         preds_procent = self.model_percent.predict(pool2)
         data_processed['percent'] = preds_procent
         pool3 = self.get_pool(data_processed)
-        preds_participants = self.model_percent.predict(pool3)
+        preds_participants = self.model_participants.predict(pool3)
         
         data_processed['Участники'] = preds_participants
         data_processed['is_normal'] = preds_status
-        data_processed.loc[data_processed['is_normal'] == 0]['Участники'] = 0
-        data_processed.loc[data_processed['is_normal'] == 0]['Ставки'] = 0
-        data_processed.loc[data_processed['is_normal'] == 0]['percent'] = 100
+        data_processed['is_normal'] = preds_status
+        data_processed.loc[data_processed['is_normal'] == 0, 'Участники'] = 0
+        data_processed.loc[data_processed['is_normal'] == 0, 'Ставки'] = 0
+        data_processed.loc[data_processed['is_normal'] == 0, 'percent'] = 1
+
+        data_processed = data_processed.rename(columns={'percent':'Уровень снижения'})
         return data_processed
 
         
