@@ -1,17 +1,23 @@
 import re
 from nltk.corpus import stopwords
-def parse_code(code):
-    return str(code).split(';')[0]
-def clean_stopwords(st, stopwords=stopwords.words('russian')):
-    ns = ''
-    for word in st.split():
-        if word not in stopwords:
-            ns += " " + word
-    return ns
-def set_time(time_tmp):
-    _, m, d = time_tmp.split('-')
-    d = d[:2]
-    return int(m)*30 + int(d)
+import pandas as pd
+
+
+# def parse_code(code):
+#     return str(code).split(';')[0]
+
+# def clean_stopwords(st, stopwords=stopwords.words('russian')):
+#     ns = ''
+#     for word in st.split():
+#         if word not in stopwords:
+#             ns += " " + word
+#     return ns
+
+# def set_time(time_tmp):
+#     _, m, d = time_tmp.split('-')
+#     d = d[:2]
+#     return int(m)*30 + int(d)
+
 def get_fts4train(paths):
     patt1 = re.compile(r'[A-Za-z0-9]')
     patt2 = re.compile(r'[!"#$%&\'()*+,-./:;<=>?@][\\^_`}{|~]')
@@ -19,21 +25,28 @@ def get_fts4train(paths):
     kpgz = pd.read_excel(path2kpgz)
     train = pd.read_excel(path2train)
     okpd = pd.read_excel(path2okpd, skiprows=6)
-    kpgz2okpd = pd.read_csv(path2kgpz2okpd)
+    kpgz2okpd = pd.read_csv(path2kpgz2okpd)
     temp_kpgz = kpgz[['Код КПГЗ', 'Наименование классификации предметов государственного заказа (КПГЗ)', "Описание КПГЗ"]]
     kpgz2okpd = kpgz2okpd.rename(columns=
-    {
-        'Код ОКПД-2 (ОКПД2014)':"Код ОКПД2"
-    }
-)
+        {
+            'Код ОКПД-2 (ОКПД2014)':"Код ОКПД2"
+        }
+    )
+
     kpgz2okpd = kpgz2okpd[['Код КПГЗ', "Код ОКПД2"]]
-    okpd = okpd.rename(columns={
-    'Код':'Код ОКПД2'
-})
-    train = train.rename(columns={
-    'ОКПД 2':'Код ОКПД2',
-    "КПГЗ":"Код КПГЗ"
-})
+    okpd = okpd.rename(columns=
+        {
+            'Код':'Код ОКПД2'
+        }
+    )
+
+    train = train.rename(columns=
+        {
+            'ОКПД 2':'Код ОКПД2',
+            "КПГЗ":"Код КПГЗ"
+        }
+    )
+    
     train['Код ОКПД2'] = train['Код ОКПД2'].apply(parse_code)
     train['Код КПГЗ'] = train['Код КПГЗ'].apply(parse_code)
     train = pd.merge(train, kpgz2okpd, on='Код КПГЗ', how='left')

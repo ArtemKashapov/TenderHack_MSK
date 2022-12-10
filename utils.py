@@ -1,10 +1,16 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 
 HIGHLIGHT_COLOR = 'green'
 PAGE_TITLE = 'Samurai'
 PAGE_ICON = '📈'
+
+# paths
+OKPD_PATH = 'data\okpd.xlsx'
+KPGZ_PATH = 'data\kpgz.xls'
+KPGZ2OKPD = 'data\kpgz_to_orpd.csv'
+MODEL_PATH = 'data\model_bin.cb'
 
 def highlight_style(_: object) -> str:
     return f'background-color: {HIGHLIGHT_COLOR}'
