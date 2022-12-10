@@ -57,14 +57,10 @@ def get_fts4train(paths):
     train = train.drop('temp', axis=1)
     train['Наименование КС'] = train['Наименование КС'].apply(lambda x: patt1.sub('', x.lower())).apply(lambda x: patt2.sub('', x)).apply(clean_stopwords)
     train = pd.merge(train, temp_kpgz, on='Код КПГЗ', how='left')
-    inn_info = train.groupby('ИНН')[['Участники', "Ставки", "НМЦК"]].agg(['std', 'count', 'median'])
+    inn_info = pd.read_csv('./data/inn_info.csv')
     train = pd.merge(train, inn_info, on='ИНН', how='left')
-    train['percent'] = train['НМЦК'] - train['Итоговая цена']
-    train['percent'] = train['percent']/train['НМЦК']
-    prepared_train = train.drop(["Итоговая цена","id", "ИНН", 'Описание КПГЗ'], axis=1)
-    prepared_train = prepared_train.loc[(prepared_train['Статус'] == 'Завершена') | (prepared_train['Статус'] == 'Не состоялась')]
+    prepared_train = train.drop(["ИНН", 'Описание КПГЗ'], axis=1)
     prepared_train['Дата'] = prepared_train['Дата'].apply(set_time)
-    prepared_train['is_normal'] = prepared_train['Статус'].apply(lambda x: 1 if x=='Завершена' else 0)
     prepared_train['Наименование КС'] = prepared_train['Наименование КС'].apply(str)
     prepared_train['Наименование классификации предметов государственного заказа (КПГЗ)'] = prepared_train['Наименование классификации предметов государственного заказа (КПГЗ)'].apply(str)
     return prepared_train
