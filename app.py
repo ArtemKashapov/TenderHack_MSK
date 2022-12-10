@@ -14,7 +14,7 @@ if file:
     df_transformed = process_data(data_frame=df)
     output_data = sol.process(data=df_transformed)
 
-    st.dataframe(output_data.style.applymap(highlight_style, subset=output_data.columns[-2:]))
+    st.dataframe(output_data.style.applymap(highlight_style, subset=['Итоговая цена', 'Участники']))
     
     st.download_button(
         label="Скачать таблицу",
