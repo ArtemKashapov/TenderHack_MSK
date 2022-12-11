@@ -9,7 +9,6 @@ from six.moves import xrange
 from utils import (INN_INFO_PATH, KPGZ2OKPD, KPGZ_PATH, MODEL_PATH, OKPD_PATH,
                    PARTICIPANTS_PATH, PERCENT_PATH, STAVKI_PATH)
 
-
 def parse_code(code: str) -> str:
     return str(code).split(';')[0]
 
@@ -56,7 +55,7 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
         }
     )
     
-
+    
     data_frame[['Код ОКПД2', 'Код КПГЗ']] = data_frame[['Код ОКПД2', 'Код КПГЗ']].apply(parse_code)
     
     data_frame = pd.merge(data_frame, kpgz2okpd, on='Код КПГЗ', how='left')
@@ -194,4 +193,4 @@ class FocalLossObjective(object):
 
             result.append((der1, der2))
 
-        return result
+        return 
