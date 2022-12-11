@@ -2,8 +2,6 @@ import pandas as pd
 import streamlit as st
 
 
-HIGHLIGHT_COLOR_ROW = 'red'
-HIGHLIGHT_COLOR_COl = 'green'
 PAGE_TITLE = 'Samurai'
 PAGE_ICON = '📈'
 
@@ -19,19 +17,30 @@ INN_INFO_PATH = 'data\inn_info.csv'
 
 def highlight_style(x: object, mask: pd.Series) -> str:
     len_x = len(x)
-    if mask[x['index']] == 0:
-        style_vec = [f'background-color: {HIGHLIGHT_COLOR_ROW}'] * len_x
+    # print(x.info())
+    if mask[x.name] == 0:
+        style_vec = [f'background-color: red'] * len_x
     else:
         style_vec = [''] * len_x
-        style_vec[3] = f'background-color: {HIGHLIGHT_COLOR_COl}'
-        style_vec[4] = f'background-color: {HIGHLIGHT_COLOR_COl}'
+        style_vec[-2] = 'background-color: green'
+        style_vec[-1] = 'background-color: green'
     return style_vec
 
-def data_styler(data: pd.DataFrame) -> pd.DataFrame:
+def data_styler(data: pd.DataFrame, in_data: pd.DataFrame) -> pd.DataFrame:
     is_normal_col = data['is_normal']
-    data = data[['Наименование КС', 'Регион', 'Уровень снижения, %', 'Участники']].reset_index()
+    data = data[['Наименование КС', 'Ставки', 'Уровень снижения, %', 'Участники']]
+    data.insert(loc=0, column='ID', value=in_data['Unnamed: 0'])
+    data.insert(loc=1, column='Обзор', value=in_data['Unnamed: 0'])
+
+    data['Обзор'] = in_data.apply(lambda x: f'<a target="_blank" href="http://localhost:8501/details?ID={x["Unnamed: 0"]}&INN={x["ИНН_хэш"]}">Посмотреть</a>', axis=1)
     data['Уровень снижения, %'] = data['Уровень снижения, %'] * 100
     return data.style.apply(highlight_style, mask=is_normal_col, axis=1)
+
+def data2download(data: pd.DataFrame, in_data: pd.DataFrame) -> pd.DataFrame:
+    data = data[['Наименование КС', 'Ставки', 'Уровень снижения, %', 'Участники']]
+    data.insert(loc=0, column='ID', value=in_data['Unnamed: 0'])
+    data.insert(loc=1, column='Обзор', value=in_data['Unnamed: 0'])
+    return data
 
 @st.cache
 def df2data(df: pd.DataFrame) -> bytes:
