@@ -55,7 +55,7 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
         }
     )
     
-    
+
     data_frame[['Код ОКПД2', 'Код КПГЗ']] = data_frame[['Код ОКПД2', 'Код КПГЗ']].apply(parse_code)
     
     data_frame = pd.merge(data_frame, kpgz2okpd, on='Код КПГЗ', how='left')
@@ -79,24 +79,6 @@ def process_data(data_frame: pd.DataFrame) -> pd.DataFrame:
 
     return prepared_data_frame
 
-# def get_prepared(data, is_train=False, task_type='bin'):
-#     X = data.drop(['percent', 'Участники', 'Ставки', "Статус", "is_normal"], axis=1)
-#     if is_train:
-#         if task_type == 'bin':
-#             return X, data['is_normal']
-#         elif task_type == 'stavki':
-#             return X, data['Ставки']
-#         elif task_type == 'percent':
-#             X['Ставки'] = data['Ставки']
-#             return X, data['percent']
-#         elif task_type == 'participants':
-#             X['Ставки'] = data['Ставки']
-#             X['percent'] = data['percent']
-#             return X, data['participants']
-#         else:
-#             return X, data[['percent', 'Участники', 'Ставки', "is_normal"]]
-#     else:
-#         return X
 
 class Solution(object):
     def __init__(self) -> None:
@@ -193,4 +175,4 @@ class FocalLossObjective(object):
 
             result.append((der1, der2))
 
-        return 
+        return result
