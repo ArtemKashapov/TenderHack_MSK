@@ -32,7 +32,7 @@ def data_styler(data: pd.DataFrame, in_data: pd.DataFrame) -> pd.DataFrame:
     data.insert(loc=0, column='ID', value=in_data['Unnamed: 0'])
     data.insert(loc=1, column='Обзор', value=in_data['Unnamed: 0'])
 
-    data['Обзор'] = in_data.apply(lambda x: f'<a target="_blank" href="http://localhost:8501/details?ID={x["Unnamed: 0"]}&INN={x["ИНН_хэш"]}">Посмотреть</a>', axis=1)
+    data['Обзор'] = in_data.apply(lambda x: f'<a target="_blank" href="http://localhost:8501/details?ID={x["Unnamed: 0"]}&INN={x["ИНН_хэш"]}&M={x["Дата"].split("-")[1]}&KPGZ={x["КПГЗ"]}">Посмотреть</a>', axis=1)
     data['Уровень снижения, %'] = data['Уровень снижения, %'] * 100
     return data.style.apply(highlight_style, mask=is_normal_col, axis=1)
 
